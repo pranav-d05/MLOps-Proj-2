@@ -21,8 +21,9 @@ warnings.filterwarnings("ignore")
 # os.environ["MLFLOW_DISABLE_ARTIFACTS_DOWNLOAD"] = "1"
 
 # Set MLflow Tracking URI & DAGsHub integration
-MLFLOW_TRACKING_URI = "https://dagshub.com/vikashdas770/YT-Capstone-Project.mlflow"
-dagshub.init(repo_owner="vikashdas770", repo_name="YT-Capstone-Project", mlflow=True)
+
+MLFLOW_TRACKING_URI = "https://dagshub.com/pranavdhebe93/MLOps-Proj-2.mlflow"
+dagshub.init(repo_owner="pranavdhebe93", repo_name="MLOps-Proj-2", mlflow=True)
 mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
 mlflow.set_experiment("LoR Hyperparameter Tuning")
 
@@ -48,22 +49,26 @@ def preprocess_text(text):
 # Load & Prepare Data
 # ==========================
 def load_and_prepare_data(filepath):
-    """Loads, preprocesses, and vectorizes the dataset."""
     df = pd.read_csv(filepath)
-    
-    # Apply text preprocessing
+
     df["review"] = df["review"].astype(str).apply(preprocess_text)
-    
-    # Filter for binary classification
     df = df[df["sentiment"].isin(["positive", "negative"])]
     df["sentiment"] = df["sentiment"].map({"negative": 0, "positive": 1})
-    
-    # Convert text data to TF-IDF vectors
+
+    X_train_text, X_test_text, y_train, y_test = train_test_split(
+        df["review"],
+        df["sentiment"],
+        test_size=0.2,
+        random_state=42,
+        stratify=df["sentiment"]
+    )
+
     vectorizer = TfidfVectorizer()
-    X = vectorizer.fit_transform(df["review"])
-    y = df["sentiment"]
-    
-    return train_test_split(X, y, test_size=0.2, random_state=42), vectorizer
+    X_train = vectorizer.fit_transform(X_train_text)
+    X_test = vectorizer.transform(X_test_text)
+
+    return X_train, X_test, y_train, y_test, vectorizer
+
 
 
 # ==========================
@@ -79,7 +84,13 @@ def train_and_log_model(X_train, X_test, y_train, y_test, vectorizer):
     }
     
     with mlflow.start_run():
-        grid_search = GridSearchCV(LogisticRegression(), param_grid, cv=5, scoring="f1", n_jobs=-1)
+        grid_search = GridSearchCV(
+            LogisticRegression(max_iter=1000),
+            param_grid,
+            cv=5,
+            scoring="f1",
+            n_jobs=-1
+        )
         grid_search.fit(X_train, y_train)
 
         # Log all hyperparameter tuning runs
@@ -87,7 +98,7 @@ def train_and_log_model(X_train, X_test, y_train, y_test, vectorizer):
                                                  grid_search.cv_results_["mean_test_score"], 
                                                  grid_search.cv_results_["std_test_score"]):
             with mlflow.start_run(run_name=f"LR with params: {params}", nested=True):
-                model = LogisticRegression(**params)
+                model = LogisticRegression(max_iter=1000,**params)
                 model.fit(X_train, y_train)
                 
                 y_pred = model.predict(X_test)
@@ -123,5 +134,5 @@ def train_and_log_model(X_train, X_test, y_train, y_test, vectorizer):
 # Main Execution
 # ==========================
 if __name__ == "__main__":
-    (X_train, X_test, y_train, y_test), vectorizer = load_and_prepare_data("notebooks/data.csv")
+    X_train, X_test, y_train, y_test, vectorizer = load_and_prepare_data("notebooks/IMDB.csv")
     train_and_log_model(X_train, X_test, y_train, y_test, vectorizer)

@@ -14,6 +14,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import MultinomialNB
 from xgboost import XGBClassifier
+from sklearn.svm import LinearSVC
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from nltk.corpus import stopwords
@@ -26,12 +27,12 @@ warnings.filterwarnings("ignore")
 
 # ========================== CONFIGURATION ==========================
 CONFIG = {
-    "data_path": "notebooks/data.csv",
+    "data_path": "notebooks/IMDB.csv",
     "test_size": 0.2,
     "mlflow_tracking_url": "https://dagshub.com/pranavdhebe93/MLOps-Proj-2.mlflow",
     "dagshub_repo_owner": "pranavdhebe93",
     "dagshub_repo_name": "MLOps-Proj-2",
-    "experiment_name": "Bow vs TfIdf"
+    "experiment_name": "BoW vs TfIdF"
 }
 
 # ========================== SETUP MLflow & DAGSHUB ==========================
@@ -93,6 +94,7 @@ VECTORIZERS = {
 
 ALGORITHMS = {
     'LogisticRegression': LogisticRegression(),
+    'LinearSVC': LinearSVC(),
     'MultinomialNB': MultinomialNB(),
     'XGBoost': XGBClassifier(),
     'RandomForest': RandomForestClassifier(),
@@ -107,10 +109,15 @@ def train_and_evaluate(df):
                 with mlflow.start_run(run_name=f"{algo_name} with {vec_name}", nested=True) as child_run:
                     try:
                         # Feature extraction
-                        X = vectorizer.fit_transform(df['review'])
-                        y = df['sentiment']
-                        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=CONFIG["test_size"], random_state=42)
-
+                        X_train_text, X_test_text, y_train, y_test = train_test_split(
+                        df['review'],
+                        df['sentiment'],
+                        test_size=CONFIG["test_size"],
+                        random_state=42,
+                        stratify=df['sentiment']
+                        )
+                        X_train = vectorizer.fit_transform(X_train_text)
+                        X_test = vectorizer.transform(X_test_text)
                         # Log preprocessing parameters
                         mlflow.log_params({
                             "vectorizer": vec_name,
@@ -165,6 +172,9 @@ def log_model_params(algo_name, model):
         params_to_log["n_estimators"] = model.n_estimators
         params_to_log["learning_rate"] = model.learning_rate
         params_to_log["max_depth"] = model.max_depth
+    elif algo_name == 'LinearSVC':
+        params_to_log["C"] = model.C
+
 
     mlflow.log_params(params_to_log)
 
