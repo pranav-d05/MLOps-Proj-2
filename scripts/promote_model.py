@@ -1,10 +1,10 @@
-# promote model
+# promote model using aliases (NEW MLflow registry)
 
 import os
 import mlflow
 
+
 def promote_model():
-    # Set up DagsHub credentials for MLflow tracking
     dagshub_token = os.getenv("CAPSTONE_TEST")
     if not dagshub_token:
         raise EnvironmentError("CAPSTONE_TEST environment variable is not set")
@@ -12,35 +12,38 @@ def promote_model():
     os.environ["MLFLOW_TRACKING_USERNAME"] = dagshub_token
     os.environ["MLFLOW_TRACKING_PASSWORD"] = dagshub_token
 
-    dagshub_url = "https://dagshub.com"
-    repo_owner = "pranavdhebe93"
-    repo_name = "MLOps-Proj-2"
-
-    # Set up MLflow tracking URI
-    mlflow.set_tracking_uri(f'{dagshub_url}/{repo_owner}/{repo_name}.mlflow')
+    mlflow.set_tracking_uri(
+        "https://dagshub.com/pranavdhebe93/MLOps-Proj-2.mlflow"
+    )
 
     client = mlflow.MlflowClient()
-
     model_name = "Senti-Classifier"
-    # Get the latest version in staging
-    latest_version_staging = client.get_latest_versions(model_name, stages=["Staging"])[0].version
 
-    # Archive the current production model
-    prod_versions = client.get_latest_versions(model_name, stages=["Production"])
-    for version in prod_versions:
-        client.transition_model_version_stage(
-            name=model_name,
-            version=version.version,
-            stage="Archived"
-        )
-
-    # Promote the new model to production
-    client.transition_model_version_stage(
-        name=model_name,
-        version=latest_version_staging,
-        stage="Production"
+    # Get all versions
+    versions = client.search_model_versions(
+        f"name='{model_name}'"
     )
-    print(f"Model version {latest_version_staging} promoted to Production")
+
+    if not versions:
+        raise RuntimeError("No model versions found")
+
+    # Pick latest version numerically
+    latest_version = max(
+        versions, key=lambda v: int(v.version)
+    ).version
+
+    # Assign alias "production"
+    client.set_registered_model_alias(
+        name=model_name,
+        alias="production",
+        version=latest_version
+    )
+
+    print(
+        f"Model '{model_name}' version {latest_version} "
+        f"assigned alias 'production'"
+    )
+
 
 if __name__ == "__main__":
     promote_model()
