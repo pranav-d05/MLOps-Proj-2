@@ -2,6 +2,7 @@ from flask import Flask, render_template, request
 import mlflow
 import pickle
 import os
+import numpy as np 
 import pandas as pd
 from prometheus_client import Counter, Histogram, generate_latest, CollectorRegistry, CONTENT_TYPE_LATEST
 import time
