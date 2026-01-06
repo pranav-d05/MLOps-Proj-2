@@ -68,7 +68,7 @@ jobs:
 
       - name: Tag Docker image
         run: |
-            docker tag ${{ secrets.ECR_REPOS }}:latest \
+            docker tag ${{ secrets.ECR_REPO }}:latest \
             ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_DEFAULT_REGION }}.amazonaws.com/${{ secrets.ECR_REPO }}:latest
 
       - name: Check Docker Authentication
