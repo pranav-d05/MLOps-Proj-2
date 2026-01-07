@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>IMDB Sentiment Analyzer</title>
+  <title>Sentiment Analysis</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
@@ -10,10 +10,10 @@
 
 <header>
   <div class="header-inner">
-    <div class="logo">🎬</div>
+    <div class="logo">✨</div>
     <div>
-      <h1>IMDB Movie Review Sentiment Analyzer</h1>
-      <p class="muted">Binary Sentiment Classification using Machine Learning</p>
+      <h1>Sentiment Analysis</h1>
+      <p class="muted">Powered by AI</p>
     </div>
   </div>
 </header>
@@ -23,58 +23,39 @@
 
     <!-- Input Section -->
     <div>
-      <h2>Enter Movie Review</h2>
-      <p class="muted">Paste an IMDB movie review to analyze sentiment</p>
+      <h2>Enter Your Text</h2>
+      <p class="muted">Type or paste text to analyze sentiment</p>
 
       <form method="POST" action="/predict">
-        <textarea
-          name="text"
-          placeholder="This movie was absolutely fantastic with brilliant acting..."
-          required
-        ></textarea>
-
-        <button type="submit" onclick="this.innerText='Analyzing…';">
-          Analyze Sentiment
-        </button>
+        <textarea name="text" placeholder="I absolutely love this product!"></textarea>
+        <button type="submit">Analyze Sentiment</button>
       </form>
     </div>
 
     <!-- Result Section -->
     <div>
-      <h2>Analysis Result</h2>
-      <p class="muted">Prediction from the trained ML model</p>
+      <h2>Analysis Results</h2>
+      <p class="muted">Prediction from the model</p>
 
       {% if result is not none %}
-        <div class="card center">
+        <div class="card">
           <p class="muted">Overall Sentiment</p>
 
           {% if result == 1 %}
-            <h2 class="sentiment-positive">😊 Positive</h2>
-            <p class="muted">
-              The review expresses a positive opinion about the movie.
-            </p>
+            <h2 class="sentiment-positive">Positive </h2>
           {% else %}
-            <h2 class="sentiment-negative">😞 Negative</h2>
-            <p class="muted">
-              The review expresses a negative opinion about the movie.
-            </p>
+            <h2 class="sentiment-negative">Negative </h2>
           {% endif %}
         </div>
       {% else %}
         <div class="card center">
-          <p class="muted">
-            Enter a movie review and click analyze to see the result.
-          </p>
+          <p class="muted">Enter text and analyze to see results</p>
         </div>
       {% endif %}
     </div>
 
   </div>
 </main>
-
-<footer class="muted center">
-  Built with Flask & Machine Learning | IMDB Dataset
-</footer>
 
 </body>
 </html>
